@@ -10,11 +10,12 @@ import {
   Oracle,
   Refactor,
   DigEasterEgg,
+  ColorPaint,
 } from './extras.jsx';
 
 // Locked-in design tokens. Green theme + cursor mist on.
 const CURSOR_MIST_ON = true;
-const FOG = 0.4;
+const FOG = 0.65; // hero-grid intensity — bumped up so AMOLED screens have visible texture
 const TICKER_SPEED = 60;
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -178,9 +179,9 @@ function HeroMarquee() {
     'OPEN FOR Q3 2026',
     '04 PROJECTS IN THE YARD',
     'NEXT SLOT — AUG',
-    '26.45°N 80.33°E',
+    'REPLY IN 48 HOURS',
     'SHIPPED 48 / DELETED 12',
-    'KANPUR · UTTAR PRADESH · SINCE MMXXII',
+    'EST · MMXXII · BUILT BY HUMANS',
   ];
   const all = [...items, ...items, ...items];
   return (
@@ -247,7 +248,7 @@ function Hero({ fog }) {
 
       <div className="hero-watermark" aria-hidden="true">
         <div className="wm-row">EST·2022 · EST·2022 · EST·2022 · EST·2022</div>
-        <div className="wm-row wm-row-rev">KANPUR · UP · KANPUR · UP · KANPUR · UP</div>
+        <div className="wm-row wm-row-rev">BUILD·YARD · BUILD·YARD · BUILD·YARD</div>
       </div>
 
       <span className="corner corner-tl">◢</span>
@@ -258,7 +259,7 @@ function Hero({ fog }) {
       <div className="hero-inner">
         <div className="hero-marks mono">
           <span>● LIVE · NOW IN THE YARD</span>
-          <span className="dim">— KANPUR · 26.45°N 80.33°E —</span>
+          <span className="dim">— Q3 2026 · OPEN FOR COMMISSIONS —</span>
           <span className="dim">FILE: 048 · REV / 02</span>
         </div>
 
@@ -297,7 +298,7 @@ function Hero({ fog }) {
             <div className="hero-tag-wrap">
               <div className="hero-tag-rule" />
               <p className="hero-tag">
-                A small Kanpur studio that builds&nbsp;
+                A small studio that builds&nbsp;
                 <span className="tag-rotator" key={tag}>
                   <span className="tag-glow">{tags[tag]}</span>
                 </span>
@@ -308,7 +309,7 @@ function Hero({ fog }) {
                   <span>START A PROJECT</span>
                   <span className="btn-glyph">→</span>
                 </a>
-                <a className="btn-ghost" href="#interred">recent shipments&nbsp;↗</a>
+                <a className="btn-ghost" href="#interred">recent shipments&nbsp;{'↗︎'}</a>
               </div>
 
               <div className="hero-keymeta">
@@ -484,7 +485,7 @@ function Interred({ tickerSpeed }) {
             <span className="reg-name">{p.name}</span>
             <span className="reg-kind">{p.kind}</span>
             <span className="reg-cause mono">— {p.cause} —</span>
-            <span className="reg-arrow">↗</span>
+            <span className="reg-arrow">{'↗︎'}</span>
           </a>
         ))}
         <div className="reg-foot mono dim">
@@ -694,7 +695,7 @@ function Summon() {
                 <br />
                 &gt;{' '}
                 <a className="terminal-mailto" href={buildMailto()}>
-                  open mail client with the brief pre-filled ↗
+                  open mail client with the brief pre-filled {'↗︎'}
                 </a>
               </div>
             )}
@@ -768,6 +769,7 @@ export default function App() {
       <Oracle />
       <Summon />
       <Footer />
+      <ColorPaint />
     </div>
   );
 }

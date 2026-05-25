@@ -1,5 +1,16 @@
 /* graveYARD studios — site styles */
 
+/* Register --accent as a typed color so the CSS engine can interpolate it
+   smoothly when the user picks a new swatch via ColorPaint. Without this,
+   the variable change snaps instantly. Houdini @property is supported in
+   Safari 16.4+, Chrome 85+, Firefox 128+. Older browsers degrade to a
+   non-animated swap, which still works correctly. */
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7fc28a;
+}
+
 :root {
   --bg:     #0a0a0b;
   --fg:     #e8e3d8;
@@ -17,11 +28,19 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); max-width: 100vw; }
+
+/* iOS/Safari render some Unicode arrows ("↗" et al) as colored emoji by
+   default. The U+FE0E text-variation selector after each glyph forces
+   text style, and this CSS rule is the modern belt-and-braces version for
+   browsers that support it (Safari 16.4+, Chrome 110+, Firefox 108+). */
+.reg-arrow, .tablet-mark, .btn-ghost, .terminal-mailto {
+  font-variant-emoji: text;
+}
 
 /* Scroll-snap-aware section offsets — sticky topbar is ~46px tall.
    Without this, navigating to #yard hides the section title behind the bar. */
@@ -53,15 +72,21 @@ em { font-style: normal; color: var(--accent); font-family: var(--serif); font-s
 .strike { text-decoration: line-through; color: var(--dimmer); }
 u { text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 
-/* Film-grain backdrop */
+/* Film-grain + ambient fog backdrop. The radials and grain give AMOLED
+   screens something to render — otherwise the #0a0a0b background is pure
+   black and the panel turns off those pixels, killing the atmosphere. */
 body::before {
   content: "";
   position: fixed; inset: 0;
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--accent) 8%, transparent) 0, transparent 45%),
-    radial-gradient(circle at 90% 100%, color-mix(in oklab, var(--accent) 5%, transparent) 0, transparent 50%);
+    radial-gradient(circle at 18% 0%,
+      color-mix(in oklab, var(--accent) 14%, transparent) 0, transparent 55%),
+    radial-gradient(ellipse 70% 55% at 90% 100%,
+      color-mix(in oklab, var(--accent) 11%, transparent) 0, transparent 65%),
+    radial-gradient(ellipse 60% 50% at 50% 50%,
+      color-mix(in oklab, var(--fg) 5%, transparent) 0, transparent 80%);
   mix-blend-mode: screen;
 }
 body::after {
@@ -69,8 +94,8 @@ body::after {
   position: fixed; inset: 0;
   pointer-events: none;
   z-index: 2;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.89 0 0 0 0 0.84 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.7;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.89 0 0 0 0 0.84 0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 .app { position: relative; z-index: 3; }
@@ -115,12 +140,24 @@ body::after {
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse { 50% { opacity: 0.4; } }
-.tb-nav { display: flex; gap: 24px; }
+.tb-nav {
+  display: flex;
+  gap: 24px;
+  min-width: 0;          /* allow shrinking inside grid */
+  max-width: 100%;
+  overflow-x: auto;      /* swipeable strip when items don't fit */
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+}
+.tb-nav::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 .tb-nav a {
   color: var(--fg);
   position: relative;
   transition: color .2s;
   padding: 4px 2px;
+  flex-shrink: 0;        /* each item keeps its width */
 }
 .tb-nav a::after {
   content: "";
@@ -1836,6 +1873,132 @@ body::after {
   .rf-cell { min-height: 110px; }
 }
 
+/* ─── ColorPaint — accent swatch picker ─── */
+.paint {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.paint-toggle {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color .2s, color .2s, transform .15s, background .2s;
+}
+.paint-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in oklab, var(--bg) 55%, var(--accent) 6%);
+}
+.paint-toggle:active { transform: scale(0.95); }
+.paint-glyph {
+  font-size: 14px;
+  color: var(--accent);
+  display: inline-block;
+  line-height: 1;
+}
+/* Slowly spin the glyph while idle — gives the button a "wet paint" feel. */
+.paint:not(.is-open) .paint-glyph {
+  animation: paint-spin 5s linear infinite;
+}
+@keyframes paint-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .paint:not(.is-open) .paint-glyph { animation: none; }
+}
+
+.paint-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 168px;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+}
+.paint-list li {
+  opacity: 0;
+  animation: paint-stagger 0.35s ease-out forwards;
+}
+@keyframes paint-stagger {
+  from { opacity: 0; transform: translate(6px, 4px); }
+  to   { opacity: 1; transform: translate(0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paint-list li { opacity: 1; animation: none; }
+}
+
+.paint-swatch {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px 7px 10px;
+  width: 100%;
+  cursor: crosshair;
+  transition: background .15s, border-color .15s;
+  text-align: left;
+}
+.paint-swatch:hover {
+  background: color-mix(in oklab, var(--bg) 50%, var(--swatch) 12%);
+  border-color: var(--swatch);
+}
+.paint-swatch.is-active {
+  border-color: var(--swatch);
+  background: color-mix(in oklab, var(--bg) 65%, var(--swatch) 8%);
+}
+.paint-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--swatch) 60%, transparent),
+    0 0 12px color-mix(in oklab, var(--swatch) 55%, transparent);
+  flex-shrink: 0;
+}
+.paint-swatch.is-active .paint-dot {
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--swatch) 90%, transparent),
+    0 0 22px color-mix(in oklab, var(--swatch) 70%, transparent);
+}
+.paint-name {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: color-mix(in oklab, var(--fg) 70%, transparent);
+  text-transform: uppercase;
+  transition: color .15s;
+}
+.paint-swatch:hover .paint-name,
+.paint-swatch.is-active .paint-name { color: var(--swatch); }
+
+@media (max-width: 480px) {
+  .paint { right: 12px; bottom: 12px; }
+  .paint-toggle { padding: 8px 12px; font-size: 9px; }
+  .paint-list { min-width: 150px; }
+}
+
 /* ─── Dig easter egg ─── */
 .dig-hint {
   position: fixed;
@@ -1844,12 +2007,21 @@ body::after {
   color: var(--dimmer);
   font-size: 10px;
   letter-spacing: 0.1em;
-  padding: 8px 12px;
+  padding: 10px 14px;
+  min-height: 40px; /* generous touch target */
   border: 1px solid var(--line);
   background: color-mix(in oklab, var(--bg) 70%, transparent);
   backdrop-filter: blur(8px);
-  transition: color .2s, border-color .2s;
+  transition: color .2s, border-color .2s, transform .15s, background .2s;
+  /* Reset button defaults so it matches the original hint visually. */
+  appearance: none;
+  cursor: crosshair;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  text-align: left;
 }
+.dig-hint:hover { color: var(--fg); border-color: var(--accent); }
+.dig-hint:active { transform: scale(0.96); }
 .dig-hint kbd {
   font-family: var(--mono);
   background: color-mix(in oklab, var(--fg) 14%, transparent);
@@ -1858,7 +2030,20 @@ body::after {
   color: var(--fg);
   font-size: 9px;
 }
-.dig-hint.is-dug { color: var(--accent); border-color: var(--accent); }
+.dig-hint.is-dug {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--bg) 50%, var(--accent) 10%);
+}
+/* Show the keyboard prompt on devices that have a real keyboard; show
+   the tap prompt on touch devices. Both span only one line. */
+.dig-hint-kb  { display: inline; }
+.dig-hint-tap { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .dig-hint-kb  { display: none; }
+  .dig-hint-tap { display: inline; }
+  .dig-hint     { cursor: default; }
+}
 .dig-layer {
   position: fixed; inset: 0;
   pointer-events: none;
@@ -2031,7 +2216,13 @@ body::after {
   .sample { font-size: 9.5px; padding: 6px 9px; }
 
   .topbar { padding: 10px 16px; gap: 12px; font-size: 10px; }
-  .tb-nav { gap: 14px; font-size: 10px; }
+  .tb-nav {
+    gap: 14px;
+    font-size: 10px;
+    /* Fade the right edge to hint at "swipe for more". */
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+  }
   .tb-nav a { white-space: nowrap; }
 
   .hero-foot-line { display: none; }
@@ -2090,9 +2281,10 @@ body::after {
 
 /* Very small phones (≤360px) */
 @media (max-width: 360px) {
-  .topbar { grid-template-columns: 1fr; gap: 6px; }
+  /* Topbar stays 2-col (status + nav). Nav scrolls horizontally instead of
+     wrapping, so it can never push the page wider than the viewport. */
   .tb-left { font-size: 9px; }
-  .tb-nav { font-size: 9px; gap: 10px; flex-wrap: wrap; justify-content: flex-start; }
+  .tb-nav  { font-size: 9.5px; gap: 12px; }
   .km { padding: 10px 8px; }
   .km-n { font-size: 20px; }
   .km-l { font-size: 8.5px; }

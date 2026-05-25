@@ -193,7 +193,7 @@ export function Manifesto() {
               <div className="seal-inner">
                 <span className="mono">EST · MMXXII</span>
                 <div className="seal-glyph">gY</div>
-                <span className="mono">KANPUR · UP</span>
+                <span className="mono">BUILD · CO</span>
               </div>
             </div>
           </div>
@@ -206,7 +206,7 @@ export function Manifesto() {
                 <span className="tablet-t">{r.main}</span>
                 {r.sub && <span className="tablet-sub">{r.sub}</span>}
               </div>
-              <span className="tablet-mark" aria-hidden="true">↗</span>
+              <span className="tablet-mark" aria-hidden="true">{'↗︎'}</span>
             </li>
           ))}
         </ol>
@@ -665,11 +665,107 @@ export function Divider({ label = '·   ·   ·' }) {
   );
 }
 
+// ─── ColorPaint — pick a secondary accent ───────────────────────────────────
+// Floating REPAINT widget bottom-right. Stores the chosen accent in
+// localStorage and writes it onto :root --accent so every accent-coloured
+// thing on the site re-tints in real time. Cursor mist, button shadows,
+// chip outlines, the foreman's eye glow — all follow.
+
+const ACCENT_KEY = 'gy_accent';
+const ACCENT_OPTIONS = [
+  { id: 'crypt',     name: 'crypt',     hex: '#7fc28a' },
+  { id: 'amber',     name: 'amber',     hex: '#e0a04b' },
+  { id: 'moonlight', name: 'moonlight', hex: '#7bb0d6' },
+  { id: 'blood',     name: 'blood',     hex: '#c9685a' },
+  { id: 'wraith',    name: 'wraith',    hex: '#a888d2' },
+  { id: 'bone',      name: 'bone',      hex: '#e8e3d8' },
+];
+
+export function ColorPaint() {
+  const [accent, setAccent] = useState(() => {
+    if (typeof window === 'undefined') return ACCENT_OPTIONS[0].hex;
+    const saved = localStorage.getItem(ACCENT_KEY);
+    if (saved && /^#[0-9a-fA-F]{6}$/.test(saved)) return saved;
+    return ACCENT_OPTIONS[0].hex;
+  });
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', accent);
+    try { localStorage.setItem(ACCENT_KEY, accent); } catch {}
+  }, [accent]);
+
+  // Close the popover when clicking outside.
+  const rootRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    const onEsc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('touchstart', onClick, { passive: true });
+    window.addEventListener('keydown', onEsc);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('touchstart', onClick);
+      window.removeEventListener('keydown', onEsc);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={`paint ${open ? 'is-open' : ''}`}>
+      {open && (
+        <ul className="paint-list" role="radiogroup" aria-label="Choose accent colour">
+          {ACCENT_OPTIONS.map((c, i) => (
+            <li key={c.id} style={{ animationDelay: `${i * 35}ms` }}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={accent === c.hex}
+                className={`paint-swatch ${accent === c.hex ? 'is-active' : ''}`}
+                style={{ '--swatch': c.hex }}
+                onClick={() => setAccent(c.hex)}
+              >
+                <span className="paint-dot" aria-hidden="true" />
+                <span className="paint-name mono">{c.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button
+        type="button"
+        className="paint-toggle mono"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={open ? 'Close colour picker' : 'Open colour picker'}
+      >
+        <span className="paint-glyph" aria-hidden="true">{open ? '×' : '◐'}</span>
+        <span className="paint-toggle-label">{open ? 'CLOSE' : 'REPAINT'}</span>
+      </button>
+    </div>
+  );
+}
+
 // ─── Dig easter egg ─────────────────────────────────────────────────────────
 
 export function DigEasterEgg() {
   const [active, setActive] = useState(false);
   const [shovels, setShovels] = useState([]);
+
+  const dig = () => {
+    setActive(true);
+    setShovels((s) =>
+      [...s, {
+        id: Date.now() + Math.random(),
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+      }].slice(-20)
+    );
+    setTimeout(() => setActive(false), 600);
+  };
+
   useEffect(() => {
     const h = (e) => {
       const tag = document.activeElement?.tagName;
@@ -680,11 +776,7 @@ export function DigEasterEgg() {
         tag !== 'INPUT' &&
         tag !== 'TEXTAREA'
       ) {
-        setActive(true);
-        setShovels((s) =>
-          [...s, { id: Date.now(), x: Math.random() * 100, y: Math.random() * 100 }].slice(-20)
-        );
-        setTimeout(() => setActive(false), 600);
+        dig();
       }
     };
     window.addEventListener('keydown', h);
@@ -693,9 +785,15 @@ export function DigEasterEgg() {
 
   return (
     <>
-      <div className={`dig-hint mono ${active ? 'is-dug' : ''}`}>
-        press <kbd>D</kbd> to dig
-      </div>
+      <button
+        type="button"
+        className={`dig-hint mono ${active ? 'is-dug' : ''}`}
+        onClick={dig}
+        aria-label="dig"
+      >
+        <span className="dig-hint-kb">press <kbd>D</kbd> to dig</span>
+        <span className="dig-hint-tap">tap to dig</span>
+      </button>
       <div className="dig-layer" aria-hidden="true">
         {shovels.map((s) => (
           <span

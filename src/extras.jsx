@@ -301,7 +301,7 @@ async function askForeman(question) {
         {
           role: 'user',
           content:
-            `You are "the foreman" — a persona created and used by graveYARD studios, a small software studio in Kanpur, Uttar Pradesh that builds websites, software, and AI work for founders. The user has come to ask the studio a question. Respond IN PERSONA:
+            `You are "the foreman" — a persona created and used by graveYARD studios, an independent software studio founded by Mohd Aijaz that builds websites, software, and AI work for founders. The user has come to ask the studio a question. Respond IN PERSONA:
 
 - Tone: dry, deadpan, a touch sardonic. Bone-deep practical. A senior craftsperson who's seen things.
 - Length: match the question. Flippant or one-liner questions get 1–2 sentences. Serious software questions get 3–6 sentences with one concrete, actionable piece of advice. Never pad. Never write filler.
@@ -481,7 +481,13 @@ const STEP_BASE_MS = 560;
 const STEP_MIN_MS = 220;
 
 export function Refactor() {
-  // phase: idle | watch | play | over
+  // phase: idle | watch | play | wait | over
+  //   idle  — pre-start screen
+  //   watch — sequence is being shown to the player (cells disabled)
+  //   play  — player's turn (cells enabled, accepting taps)
+  //   wait  — 600ms gap after a successful round; cells locked so a stray
+  //           double-tap can't trigger the next round or the game-over branch
+  //   over  — player made a wrong tap, game ended, "again" button shown
   const [phase, setPhase] = useState('idle');
   const [sequence, setSequence] = useState([]);
   const [inputIdx, setInputIdx] = useState(0);
@@ -489,9 +495,27 @@ export function Refactor() {
   const [wrong, setWrong] = useState(-1);
   const [best, setBest] = useState(0);
 
+  // Refs that mirror state, read inside tap() so we never read a stale
+  // closure if the user taps twice before React commits the next render.
+  const phaseRef = useRef(phase);
+  const sequenceRef = useRef(sequence);
+  const inputIdxRef = useRef(inputIdx);
+  const bestRef = useRef(best);
+  phaseRef.current = phase;
+  sequenceRef.current = sequence;
+  inputIdxRef.current = inputIdx;
+  bestRef.current = best;
+
+  // Pending "advance to next round" timer — tracked so start()/restart can
+  // cancel it if the component is re-entered mid-gap.
+  const advanceTimerRef = useRef(null);
+
   useEffect(() => {
     const saved = parseInt(localStorage.getItem(REFACTOR_BEST_KEY) || '0', 10);
     if (!Number.isNaN(saved)) setBest(saved);
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
   }, []);
 
   // Visual playback of the sequence during 'watch'. Each step shortens as the
@@ -521,7 +545,16 @@ export function Refactor() {
   }, [phase, sequence]);
 
   const start = () => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
     const first = Math.floor(Math.random() * 4);
+    // Sync refs immediately so a stray tap that races with the START click
+    // doesn't fall into a stale-state branch.
+    phaseRef.current = 'watch';
+    sequenceRef.current = [first];
+    inputIdxRef.current = 0;
     setSequence([first]);
     setInputIdx(0);
     setLit(-1);
@@ -529,28 +562,46 @@ export function Refactor() {
     setPhase('watch');
   };
 
+  // Read state through refs — tap() can fire faster than React commits, so
+  // closure-captured `phase`, `sequence`, `inputIdx` could be one render old.
+  // We also write the refs synchronously after each state change, so a
+  // duplicate tap fired in the *same* JS turn sees the updated phase /
+  // inputIdx and bails out instead of progressing twice.
   const tap = (idx) => {
-    if (phase !== 'play') return;
+    if (phaseRef.current !== 'play') return;
+    const seq = sequenceRef.current;
+    const cur = inputIdxRef.current;
+
+    // Flash the tapped cell briefly for feedback.
     setLit(idx);
     setTimeout(() => setLit((l) => (l === idx ? -1 : l)), 180);
 
-    if (sequence[inputIdx] === idx) {
-      const next = inputIdx + 1;
-      if (next === sequence.length) {
-        // Round complete — that streak is now the player's best-known result.
-        const streak = sequence.length;
-        if (streak > best) {
+    if (seq[cur] === idx) {
+      const next = cur + 1;
+      if (next === seq.length) {
+        // Round complete. Lock input via 'wait' phase so a stray double-tap
+        // during the 600 ms gap can't accidentally end the game or chain
+        // another round-complete.
+        const streak = seq.length;
+        if (streak > bestRef.current) {
+          bestRef.current = streak;
           setBest(streak);
-          localStorage.setItem(REFACTOR_BEST_KEY, String(streak));
+          try { localStorage.setItem(REFACTOR_BEST_KEY, String(streak)); } catch {}
         }
-        setTimeout(() => {
+        phaseRef.current = 'wait';
+        setPhase('wait');
+        if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+        advanceTimerRef.current = setTimeout(() => {
+          advanceTimerRef.current = null;
           setSequence((prev) => [...prev, Math.floor(Math.random() * 4)]);
           setPhase('watch');
         }, 600);
       } else {
+        inputIdxRef.current = next;
         setInputIdx(next);
       }
     } else {
+      phaseRef.current = 'over';
       setWrong(idx);
       setLit(idx);
       setPhase('over');
@@ -561,8 +612,9 @@ export function Refactor() {
     phase === 'idle' ? 'press start to begin'
       : phase === 'watch' ? 'watch the sequence'
         : phase === 'play' ? `your turn — ${inputIdx + 1} / ${sequence.length}`
-          : phase === 'over' ? `miss — round was ${sequence.length}`
-            : '';
+          : phase === 'wait' ? 'nice — next sequence loading'
+            : phase === 'over' ? `miss — round was ${sequence.length}`
+              : '';
   const completedStreak = sequence.length - 1;
 
   return (
@@ -610,12 +662,6 @@ export function Refactor() {
                 type="button"
                 className={`rf-cell rf-cell-${i} ${lit === i ? 'is-lit' : ''} ${wrong === i ? 'is-wrong' : ''}`}
                 onClick={() => tap(i)}
-                onTouchStart={(e) => {
-                  if (phase === 'play') {
-                    e.preventDefault();
-                    tap(i);
-                  }
-                }}
                 disabled={phase !== 'play'}
                 aria-label={`pattern key ${k.name}`}
               >

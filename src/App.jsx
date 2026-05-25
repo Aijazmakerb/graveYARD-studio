@@ -618,7 +618,8 @@ function Summon() {
           </p>
 
           <div className="summon-meta mono">
-            <div><span className="dim">studio.</span> KANPUR, UTTAR PRADESH</div>
+            <div><span className="dim">studio.</span> INDEPENDENT</div>
+            <div><span className="dim">founder.</span> MOHD AIJAZ</div>
             <div><span className="dim">hours.</span> WED–SUN · 11–19h IST</div>
             <div>
               <span className="dim">signal.</span>{' '}

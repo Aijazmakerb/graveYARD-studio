@@ -1,8 +1,8 @@
 {
   "name": "graveYARD studios",
   "short_name": "graveYARD",
-  "description": "A small software studio in Kanpur, Uttar Pradesh. Websites, software, AI and brand systems.",
-  "lang": "en-IN",
+  "description": "Independent software studio by Mohd Aijaz. Websites, software, AI and brand systems.",
+  "lang": "en",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

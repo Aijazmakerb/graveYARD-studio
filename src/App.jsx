@@ -521,13 +521,86 @@ function Rites() {
   );
 }
 
+// ── Summon — real form delivery ────────────────────────────────────────────
+// Two-path delivery:
+//  1. If FORM_ENDPOINT is set, POST JSON to it (works with Formspree, Web3Forms,
+//     Getform, Basin, or any endpoint that accepts JSON and replies 2xx).
+//  2. Otherwise (or on failure) open the visitor's mail client via mailto:
+//     with the brief pre-filled. The email lands at CONTACT_EMAIL.
+//
+// To wire Formspree:
+//   1. Sign up at https://formspree.io (free tier: 50 submissions/month)
+//   2. Create a form, copy the endpoint that looks like:
+//        https://formspree.io/f/xxxxxxxx
+//   3. Paste it into FORM_ENDPOINT below — done. Submissions arrive in your inbox.
+//
+// To wire Web3Forms instead:
+//   - Get an access_key at https://web3forms.com
+//   - Set FORM_ENDPOINT = 'https://api.web3forms.com/submit'
+//   - Add { access_key: 'YOUR_KEY' } to the request body in submit()
+const FORM_ENDPOINT = 'https://formspree.io/f/maqkdknn';                     
+const CONTACT_EMAIL = 'gr4veyardstudio@gmail.com';
+
 function Summon() {
   const [form, setForm] = useState({ name: '', email: '', brief: '' });
-  const [sent, setSent] = useState(false);
-  const submit = (e) => {
-    e.preventDefault();
-    setSent(true);
+  // status: idle | sending | sent | error
+  const [status, setStatus] = useState('idle');
+  const [errMsg, setErrMsg] = useState('');
+
+  const valid = form.name.trim() && form.email.trim() && form.brief.trim();
+
+  const buildMailto = () => {
+    const subject = `brief from ${form.name || 'someone'}`;
+    const body =
+      `from: ${form.name}\n` +
+      `contact: ${form.email}\n\n` +
+      `brief:\n${form.brief}\n`;
+    return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!valid || status === 'sending') return;
+    setStatus('sending');
+    setErrMsg('');
+
+    // Path 1 — POST to endpoint (Formspree-compatible).
+    if (FORM_ENDPOINT) {
+      try {
+        const res = await fetch(FORM_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            brief: form.brief,
+            _subject: `brief from ${form.name}`,
+            _from: 'graveyardstudios.tech',
+          }),
+        });
+        if (!res.ok) throw new Error(`server ${res.status}`);
+        setStatus('sent');
+        setForm({ name: '', email: '', brief: '' });
+        return;
+      } catch (err) {
+        setStatus('error');
+        setErrMsg("the wire dropped. open your mail app below — same effect.");
+        return;
+      }
+    }
+
+    // Path 2 — no endpoint configured: open mail client.
+    window.location.href = buildMailto();
+    setStatus('sent');
+  };
+
+  const sent = status === 'sent';
+  const sending = status === 'sending';
+  const errored = status === 'error';
+
   return (
     <section id="summon" className="summon">
       <div className="summon-grid">
@@ -546,12 +619,15 @@ function Summon() {
           <div className="summon-meta mono">
             <div><span className="dim">studio.</span> KANPUR, UTTAR PRADESH</div>
             <div><span className="dim">hours.</span> WED–SUN · 11–19h IST</div>
-            <div><span className="dim">signal.</span> hello@graveyard.studio</div>
+            <div>
+              <span className="dim">signal.</span>{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+            </div>
             <div><span className="dim">crypt.</span> @graveyardstudios</div>
           </div>
         </div>
 
-        <form className={`summon-form ${sent ? 'is-sent' : ''}`} onSubmit={submit}>
+        <form className={`summon-form ${sent ? 'is-sent' : ''}`} onSubmit={submit} noValidate>
           <div className="terminal-bar mono">
             <span>● ● ●</span>
             <span>seance.sh — bash</span>
@@ -564,14 +640,19 @@ function Summon() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="who's calling"
+                disabled={sending || sent}
+                required
               />
             </label>
             <label>
               <span className="mono dim">$ contact</span>
               <input
+                type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="email or signal"
+                placeholder="email"
+                disabled={sending || sent}
+                required
               />
             </label>
             <label>
@@ -580,19 +661,41 @@ function Summon() {
                 rows={5}
                 value={form.brief}
                 onChange={(e) => setForm({ ...form, brief: e.target.value })}
-                placeholder={'1. what is it\n2. who is it for\n3. when does it have to be in the ground'}
+                placeholder={'1. what is it\n2. who is it for\n3. when does it have to ship'}
+                disabled={sending || sent}
+                required
               />
             </label>
             <div className="terminal-foot">
-              <span className="mono dim">↳ sealed with PGP. all replies within 48 hours.</span>
-              <button type="submit" className="btn-primary">
-                <span>{sent ? 'TRANSMITTED' : 'SEND BRIEF'}</span>
-                <span className="btn-glyph">{sent ? '✓' : '→'}</span>
+              <span className="mono dim">
+                ↳ replies within 48 hours. or email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> directly.
+              </span>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={!valid || sending || sent}
+              >
+                <span>
+                  {sent ? 'TRANSMITTED' : sending ? 'SENDING' : 'SEND BRIEF'}
+                </span>
+                <span className="btn-glyph">
+                  {sent ? '✓' : sending ? '…' : '→'}
+                </span>
               </button>
             </div>
             {sent && (
               <div className="terminal-out mono">
                 &gt; brief received. we'll be in touch within 48 hours.
+              </div>
+            )}
+            {errored && (
+              <div className="terminal-out mono terminal-out-err">
+                &gt; {errMsg}
+                <br />
+                &gt;{' '}
+                <a className="terminal-mailto" href={buildMailto()}>
+                  open mail client with the brief pre-filled ↗
+                </a>
               </div>
             )}
           </div>

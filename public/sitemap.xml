@@ -2,35 +2,35 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://graveyard.studio/</loc>
+    <loc>https://graveyardstudios.tech/</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en-in" href="https://graveyard.studio/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://graveyard.studio/" />
+    <xhtml:link rel="alternate" hreflang="en-in" href="https://graveyardstudios.tech/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://graveyardstudios.tech/" />
   </url>
   <url>
-    <loc>https://graveyard.studio/#yard</loc>
+    <loc>https://graveyardstudios.tech/#yard</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://graveyard.studio/#code</loc>
+    <loc>https://graveyardstudios.tech/#code</loc>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://graveyard.studio/#interred</loc>
+    <loc>https://graveyardstudios.tech/#interred</loc>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://graveyard.studio/#refactor</loc>
+    <loc>https://graveyardstudios.tech/#refactor</loc>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://graveyard.studio/#oracle</loc>
+    <loc>https://graveyardstudios.tech/#oracle</loc>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://graveyard.studio/#summon</loc>
+    <loc>https://graveyardstudios.tech/#summon</loc>
     <priority>0.8</priority>
   </url>
 </urlset>

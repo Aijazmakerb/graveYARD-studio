@@ -1018,6 +1018,34 @@ body::after {
   letter-spacing: 0.04em;
   text-transform: none;
 }
+.terminal-out-err {
+  border-color: oklch(0.62 0.20 25);
+  color: oklch(0.78 0.15 25);
+}
+.terminal-out-err .terminal-mailto {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.terminal-body input:disabled,
+.terminal-body textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.summon-meta a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color .2s, color .2s;
+}
+.summon-meta a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
 /* ─── Footer ─── */
 .foot {
@@ -1237,40 +1265,86 @@ body::after {
 
 .tablet {
   list-style: none;
-  margin: 0; padding: 32px 32px 24px;
-  background: color-mix(in oklab, var(--bg) 90%, var(--fg) 5%);
+  margin: 0;
+  padding: clamp(24px, 3vw, 36px) clamp(20px, 3vw, 36px) clamp(20px, 2.5vw, 28px);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--bg) 86%, var(--fg) 6%),
+      color-mix(in oklab, var(--bg) 92%, var(--fg) 4%));
   border: 1px solid var(--line);
   position: relative;
   counter-reset: tab;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--fg) 8%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, var(--bg) 100%, transparent);
 }
 .tablet::before, .tablet::after {
   content: "";
   position: absolute;
   left: 50%; transform: translateX(-50%);
-  width: 60%; height: 1px;
+  width: 50%; height: 1px;
   background: var(--line);
 }
 .tablet::before { top: -1px; box-shadow: 0 8px 0 -1px color-mix(in oklab, var(--bg) 100%, transparent), 0 8px 0 0 var(--line); }
 .tablet::after  { bottom: -1px; box-shadow: 0 -8px 0 -1px color-mix(in oklab, var(--bg) 100%, transparent), 0 -8px 0 0 var(--line); }
 .tablet-rule {
   display: grid;
-  grid-template-columns: 56px 1fr;
-  gap: 16px;
-  padding: 18px 8px;
+  grid-template-columns: 48px 1fr 20px;
+  gap: 18px;
+  padding: 18px 8px 18px 6px;
   border-bottom: 1px dashed var(--line);
-  align-items: baseline;
+  align-items: start;
+  position: relative;
+  cursor: crosshair;
+  transition: background .25s, padding .25s;
 }
 .tablet-rule:last-child { border-bottom: 0; }
-.tablet-n { color: var(--accent); font-size: 11px; }
+.tablet-rule::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform .25s ease;
+}
+.tablet-rule:hover { background: color-mix(in oklab, var(--bg) 75%, var(--fg) 6%); padding-left: 14px; }
+.tablet-rule:hover::before { transform: scaleY(1); }
+
+.tablet-n {
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  padding-top: 4px;
+}
+.tablet-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .tablet-t {
   font-family: var(--sans);
-  font-size: 19px;
-  line-height: 1.4;
-  font-weight: 500;
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.35;
+  font-weight: 600;
   color: var(--fg);
   text-wrap: pretty;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.018em;
 }
+.tablet-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.4;
+  color: color-mix(in oklab, var(--fg) 55%, transparent);
+  text-wrap: pretty;
+}
+.tablet-mark {
+  align-self: start;
+  padding-top: 6px;
+  color: color-mix(in oklab, var(--fg) 22%, transparent);
+  font-size: 14px;
+  transition: color .25s, transform .25s;
+}
+.tablet-rule:hover .tablet-mark { color: var(--accent); transform: translate(3px, -3px); }
 
 /* ─── Testimonials ─── */
 .testimonials {
@@ -1278,11 +1352,11 @@ body::after {
   border-top: 1px solid var(--line);
 }
 .testimonials-grid {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--pad-section);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: clamp(16px, 2.5vw, 24px);
 }
 .quote {
@@ -1322,16 +1396,48 @@ body::after {
   letter-spacing: -0.015em;
 }
 .quote-cite {
-  margin-top: 32px;
+  margin-top: 28px;
   font-size: 13px;
 }
 .quote-rule { height: 1px; background: var(--line); margin-bottom: 16px; }
+.quote-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.quote-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--accent) 60%, var(--line));
+  background: color-mix(in oklab, var(--bg) 85%, var(--accent) 8%);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  font-variation-settings: "wdth" 90;
+  transition: background .25s, border-color .25s, transform .25s;
+}
+.quote:hover .quote-avatar {
+  background: color-mix(in oklab, var(--bg) 70%, var(--accent) 20%);
+  border-color: var(--accent);
+}
+.quote-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .quote-who {
   font-family: var(--sans);
   font-weight: 700;
   font-size: 15px;
-  margin-bottom: 4px;
   letter-spacing: -0.01em;
+}
+.quote-tag {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
 /* ─── Oracle ─── */
@@ -1803,6 +1909,30 @@ body::after {
   .lockup-row-end { padding-left: 0; }
   .hero-keymeta { grid-template-columns: repeat(4, 1fr); }
 
+  /* YARD spans the full hero column. Now that hero-main collapses to one
+     column at ≤960, the right column moves below the lockup — without this
+     rule the YARD floated left and left a big dead pocket on the right. We
+     bleed past the hero gutter via negative margin so the lockup hits both
+     edges of the viewport, and pick a font-size that renders ~100vw wide
+     (Bricolage @ wdth 85 + letter-spacing -0.085em ≈ 2.18× per "YARD"). */
+  .lockup { width: 100%; }
+  .lockup-yard-wrap {
+    display: block;
+    width: calc(100% + var(--pad-x) * 2);
+    margin-left:  calc(-1 * var(--pad-x));
+    margin-right: calc(-1 * var(--pad-x));
+  }
+  .lockup-yard {
+    font-size: clamp(140px, 46vw, 440px);
+    letter-spacing: -0.085em;
+    width: 100%;
+    text-align: center;
+  }
+  .lockup-grave   { font-size: clamp(48px, 14vw, 160px); }
+  .lockup-studios { font-size: clamp(32px, 10vw, 110px); }
+  .lockup-row { justify-content: flex-start; }
+  .annotation-bottom { width: 80%; }
+
   .plots, .rites-list { grid-template-columns: repeat(2, 1fr); }
   .summon-grid { grid-template-columns: 1fr; }
   .manifesto-inner { grid-template-columns: 1fr; gap: 40px; }
@@ -1832,23 +1962,12 @@ body::after {
   .lockup-suffix { flex-basis: 100%; padding-bottom: 0; padding-top: 4px; }
   .tb-left-long { display: none; }
 
-  /* YARD fills the row on phones — letter-spacing -0.08em so "YARD" hugs the edges */
-  .lockup { width: 100%; }
-  .lockup-yard-wrap { display: block; width: 100%; }
-  .lockup-yard {
-    font-size: clamp(120px, 38vw, 240px);
-    letter-spacing: -0.08em;
-    width: 100%;
-    text-align: center;
-  }
-  .lockup-row { justify-content: flex-start; }
-  .lockup-grave { font-size: clamp(44px, 13vw, 80px); }
-  .lockup-studios { font-size: clamp(28px, 9vw, 56px); }
-  /* Annotations were hidden at 960; bottom one is fine to keep but center it */
-  .annotation-bottom { width: 80%; }
-  .lockup-grave { font-size: clamp(32px, 9vw, 56px); }
-  .lockup-yard { font-size: clamp(64px, 20vw, 130px); }
-  .lockup-studios { font-size: clamp(22px, 6vw, 36px); }
+  /* Phone-specific lockup tuning — the edge-to-edge bleed itself is set in
+     the ≤960 rule above; here we just cap the secondary type tighter so
+     "grave" / "studios" don't dwarf the lockup on small screens. */
+  .lockup-grave   { font-size: clamp(48px, 14vw, 96px); }
+  .lockup-studios { font-size: clamp(32px, 10vw, 64px); }
+  .lockup-yard    { font-size: clamp(140px, 46vw, 300px); }
 
   .hero-keymeta { grid-template-columns: repeat(2, 1fr); }
   .km { padding: 12px; }
@@ -1891,9 +2010,13 @@ body::after {
   .terminal-foot { flex-direction: column; align-items: stretch; }
   .terminal-foot .btn-primary { justify-content: center; }
 
-  .tablet { padding: 24px 18px 14px; }
-  .tablet-rule { grid-template-columns: 44px 1fr; gap: 12px; padding: 14px 4px; }
-  .tablet-t { font-size: 16px; }
+  .tablet { padding: 24px 18px 16px; }
+  .tablet-rule { grid-template-columns: 36px 1fr 16px; gap: 12px; padding: 14px 4px; }
+  .tablet-rule:hover { padding-left: 8px; }
+  .tablet-t   { font-size: 16px; }
+  .tablet-sub { font-size: 13px; }
+  .tablet-mark { font-size: 12px; padding-top: 4px; }
+  .tablet-n   { padding-top: 2px; }
   .seal-ring { width: 140px; height: 140px; }
   .seal-glyph { font-size: 22px; }
   .manifesto-seal { margin-top: 40px; justify-content: center; }
@@ -1929,9 +2052,9 @@ body::after {
   .hero-marks { flex-direction: column; align-items: flex-start; gap: 4px; }
   .hero-marks > span { display: block !important; }
 
-  .lockup-yard { font-size: clamp(140px, 42vw, 200px); letter-spacing: -0.09em; }
-  .lockup-grave { font-size: clamp(48px, 15vw, 72px); }
-  .lockup-studios { font-size: clamp(32px, 11vw, 52px); }
+  /* 720 override already scales YARD to viewport; tighten lockup proportions */
+  .lockup-grave   { font-size: clamp(48px, 14vw, 72px); }
+  .lockup-studios { font-size: clamp(32px, 10vw, 56px); }
 
   .hero-cta { flex-direction: column; align-items: stretch; gap: 12px; }
   .btn-primary { justify-content: center; padding: 14px 18px; }

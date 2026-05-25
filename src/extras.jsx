@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export function BootSequence({ onDone }) {
   const lines = [
-    { t: 80,  s: "$ ./startup --boot graveyard.studios" },
+    { t: 80, s: "$ ./startup --boot graveyardstudios.tech" },
     { t: 280, s: "  loading manifest ............ ok" },
     { t: 200, s: "  spinning up the yard ........ ok" },
     { t: 200, s: "  connecting to the foreman ... " },
@@ -107,9 +107,9 @@ export function StatsStrip() {
     return () => io.disconnect();
   }, []);
 
-  const buried  = useTickUp(48,     1400, vis);
-  const loc     = useTickUp(2_347,  1800, vis);
-  const bugs    = useTickUp(1_847,  1600, vis);
+  const buried = useTickUp(48, 1400, vis);
+  const loc = useTickUp(2_347, 1800, vis);
+  const bugs = useTickUp(1_847, 1600, vis);
   const coffees = useTickUp(11_204, 2000, vis);
 
   return (
@@ -146,13 +146,34 @@ export function StatsStrip() {
 // ─── Manifesto / The Code ───────────────────────────────────────────────────
 
 const CODE_RULES = [
-  "Ship something ugly before you ship something beautiful.",
-  "Refuse the meeting that could have been a paragraph.",
-  "Delete code on Fridays. It feels good. Try it.",
-  "Estimate in weeks, not days. Days are a lie clients tell themselves.",
-  "Write the docs first or accept that there will be none.",
-  "A demo on Tuesday beats a deck on Thursday, every time.",
-  "Stay small. Stay weird. Build the thing.",
+  {
+    main: "Ship something ugly before something beautiful.",
+    sub: "Drafts in prod beat masterpieces in Figma.",
+  },
+  {
+    main: "Refuse the meeting that could have been a paragraph.",
+    sub: "Then write the paragraph.",
+  },
+  {
+    main: "Delete code on Fridays.",
+    sub: "Fewer lines, fewer bugs. Try it once.",
+  },
+  {
+    main: "Estimate in weeks, not days.",
+    sub: "Days are a lie clients tell themselves.",
+  },
+  {
+    main: "Write the docs first.",
+    sub: "Or accept there will be none.",
+  },
+  {
+    main: "A demo on Tuesday beats a deck on Thursday.",
+    sub: "Show, don't tell. Every time.",
+  },
+  {
+    main: "Stay small. Stay weird. Build the thing.",
+    sub: "Everything else follows.",
+  },
 ];
 
 export function Manifesto() {
@@ -180,8 +201,12 @@ export function Manifesto() {
         <ol className="tablet">
           {CODE_RULES.map((r, i) => (
             <li key={i} className="tablet-rule">
-              <span className="tablet-n mono">{String(i + 1).padStart(2, '0')}.</span>
-              <span className="tablet-t">{r}</span>
+              <span className="tablet-n mono">{String(i + 1).padStart(2, '0')}</span>
+              <div className="tablet-body">
+                <span className="tablet-t">{r.main}</span>
+                {r.sub && <span className="tablet-sub">{r.sub}</span>}
+              </div>
+              <span className="tablet-mark" aria-hidden="true">↗</span>
             </li>
           ))}
         </ol>
@@ -194,22 +219,28 @@ export function Manifesto() {
 
 const QUOTES = [
   {
-    body: "They killed our SPA, replaced it with something boring, and our pageviews doubled. I have no further questions.",
-    who: "M. Halloran",
-    role: "CEO, Pale Fox",
+    body: "Replaced our jQuery mess with a Next.js rewrite in four weeks. Lighthouse went from 38 to 96, conversions ticked up 22 percent. They left the codebase cleaner than they found it and the handover doc was actually readable.",
+    who: "Aarav Sharma",
+    tag: "WEB",
     yr: "MMXXVI",
   },
   {
-    body: "First agency to ever turn down our brief. Also the first to deliver early. I think those two facts are related.",
-    who: "S. Okafor",
-    role: "Founder, Lantern",
+    body: "Hired them to build a B2B dashboard. They spent the first week telling us not to build a dashboard. They were right. We shipped a workflow tool instead and saved six months of dead code.",
+    who: "Meera Krishnan",
+    tag: "SOFTWARE",
     yr: "MMXXV",
   },
   {
-    body: "Got an actual diagnosis before they wrote a line of code. Felt like therapy. Cost less.",
-    who: "J. Maeda",
-    role: "VP Eng, Northwind",
+    body: "Three founders, zero engineers, two weeks until demo day. They scoped the MVP, designed the brand, and shipped both without asking a single dumb question. We got into the cohort.",
+    who: "Rohan Mehta",
+    tag: "SOFTWARE · BRAND",
     yr: "MMXXV",
+  },
+  {
+    body: "Asked for an AI feature. Got the feature, a small eval harness, and a one-page memo on why we shouldn't ship it yet. We kept the memo, fixed the data, then shipped. Both still in prod.",
+    who: "Karthik Nair",
+    tag: "AI",
+    yr: "MMXXIV",
   },
 ];
 
@@ -218,40 +249,65 @@ export function Testimonials() {
     <section className="testimonials">
       <Divider label="—   in their words   —" />
       <div className="testimonials-grid">
-        {QUOTES.map((q, i) => (
-          <figure key={i} className="quote">
-            <div className="quote-mark">“</div>
-            <blockquote className="quote-body">{q.body}</blockquote>
-            <figcaption className="quote-cite">
-              <div className="quote-rule" />
-              <div className="quote-who">{q.who}</div>
-              <div className="mono dim">{q.role} · {q.yr}</div>
-            </figcaption>
-          </figure>
-        ))}
+        {QUOTES.map((q, i) => {
+          // Surname initial → avatar letter (handles "A. Sharma" → "S")
+          const parts = q.who.split(/\s+/);
+          const initial = (parts[parts.length - 1] || q.who).charAt(0).toUpperCase();
+          return (
+            <figure key={i} className="quote">
+              <div className="quote-mark" aria-hidden="true">“</div>
+              <blockquote className="quote-body">{q.body}</blockquote>
+              <figcaption className="quote-cite">
+                <div className="quote-rule" />
+                <div className="quote-foot">
+                  <div className="quote-avatar" aria-hidden="true">{initial}</div>
+                  <div className="quote-meta">
+                    <div className="quote-who">{q.who}</div>
+                    <div className="mono dim">
+                      {q.tag && <span className="quote-tag">{q.tag}</span>}
+                      {q.tag && ' · '}{q.yr}
+                    </div>
+                  </div>
+                </div>
+              </figcaption>
+            </figure>
+          );
+        })}
       </div>
     </section>
   );
 }
 
 // ─── Oracle ─────────────────────────────────────────────────────────────────
-// Uses window.claude.complete() when running inside the Claude design sandbox.
-// Outside the sandbox, falls back to a friendly stub so the UI stays usable.
+// Three-path delivery, in order of preference:
+//   1. window.claude.complete()      — when running inside the Anthropic
+//                                       design sandbox (dev convenience).
+//   2. FOREMAN_ENDPOINT (POST JSON)  — your own proxy. Recommended path for
+//                                       production. See foreman-worker.js in
+//                                       the project root for a 50-line
+//                                       Cloudflare Worker that proxies to
+//                                       Gemini (or OpenAI, Claude, etc.).
+//   3. Stub answer                   — friendly placeholder if neither is set.
+//
+// Paste your deployed Worker URL below. The Worker holds the API key as a
+// secret — the key never reaches the browser.
+const FOREMAN_ENDPOINT = 'https://gentle-bar-7552.786aijazusmaan.workers.dev/'; // e.g. 'https://foreman.your-name.workers.dev'
 
 async function askForeman(question) {
+  // Path 1 — Anthropic design sandbox
   if (typeof window !== 'undefined' && window.claude?.complete) {
     return window.claude.complete({
       messages: [
         {
           role: 'user',
           content:
-`You are the foreman at graveYARD studios — a small software studio in Kanpur, Uttar Pradesh that builds websites, software, and AI work for founders. The user has come to ask the studio a question. Respond IN CHARACTER:
+            `You are "the foreman" — a persona created and used by graveYARD studios, a small software studio in Kanpur, Uttar Pradesh that builds websites, software, and AI work for founders. The user has come to ask the studio a question. Respond IN PERSONA:
 
-- 2–3 short sentences. Total under 60 words.
 - Tone: dry, deadpan, a touch sardonic. Bone-deep practical. A senior craftsperson who's seen things.
+- Length: match the question. Flippant or one-liner questions get 1–2 sentences. Serious software questions get 3–6 sentences with one concrete, actionable piece of advice. Never pad. Never write filler.
 - Use lowercase except for proper nouns. No emoji. No exclamation marks.
 - If asked something flippant, answer plainly. If asked something serious about software, give one real, useful piece of advice in the same voice.
-- Never break character. Never mention being an AI or a language model.
+- Stay in persona by default. If a user directly and sincerely asks whether you are an AI / a language model / a bot, briefly acknowledge in one sentence that you are a general-purpose language model wearing the studio's voice, then return to the persona. Never claim to be a human.
 
 The question:
 ${question}`,
@@ -259,9 +315,24 @@ ${question}`,
       ],
     });
   }
-  // Local-dev fallback. Wire this to a real /api/foreman endpoint in production.
+
+  // Path 2 — your own proxy (Cloudflare Worker, Vercel function, etc.)
+  if (FOREMAN_ENDPOINT) {
+    const res = await fetch(FOREMAN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
+    if (!res.ok) throw new Error(`foreman ${res.status}`);
+    const data = await res.json();
+    const text = (data?.text || '').trim();
+    if (!text) throw new Error('empty answer');
+    return text;
+  }
+
+  // Path 3 — stub
   await new Promise((r) => setTimeout(r, 700));
-  return "the foreman is on a smoke break. wire window.claude.complete or a /api/foreman endpoint and try again.";
+  return "the foreman is on a smoke break. wire FOREMAN_ENDPOINT (extras.jsx) to a small Gemini proxy and try again — see foreman-worker.js for a 5-minute setup.";
 }
 
 export function Oracle() {
@@ -308,8 +379,9 @@ export function Oracle() {
             <br /><em>anything.</em>
           </h2>
           <p className="section-lede">
-            We trained a small bot on a decade of our worst opinions.
-            It answers in under sixty words. It is rarely polite.
+            An off-the-shelf language model dressed in our house voice.
+            Under sixty words per answer, rarely polite, not always right.
+            It's a prompt, not a prophecy — don't bet a startup on it.
           </p>
         </div>
 
@@ -487,10 +559,10 @@ export function Refactor() {
 
   const status =
     phase === 'idle' ? 'press start to begin'
-    : phase === 'watch' ? 'watch the sequence'
-    : phase === 'play' ? `your turn — ${inputIdx + 1} / ${sequence.length}`
-    : phase === 'over' ? `miss — round was ${sequence.length}`
-    : '';
+      : phase === 'watch' ? 'watch the sequence'
+        : phase === 'play' ? `your turn — ${inputIdx + 1} / ${sequence.length}`
+          : phase === 'over' ? `miss — round was ${sequence.length}`
+            : '';
   const completedStreak = sequence.length - 1;
 
   return (

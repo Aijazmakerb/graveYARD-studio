@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://graveyard.studio/</loc>
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-in" href="https://graveyard.studio/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://graveyard.studio/" />
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#yard</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#code</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#interred</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#refactor</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#oracle</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://graveyard.studio/#summon</loc>
+    <priority>0.8</priority>
+  </url>
+</urlset>

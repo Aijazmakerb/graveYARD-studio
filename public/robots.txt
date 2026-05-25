@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Block nothing — single-page site with public content
+Disallow:
+
+Sitemap: https://graveyard.studio/sitemap.xml
